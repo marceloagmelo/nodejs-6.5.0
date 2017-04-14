@@ -1,0 +1,69 @@
+{
+  "name": "express-prom-bundle",
+  "version": "1.1.8",
+  "description": "express middleware with popular prometheus metrics in one bundle",
+  "main": "src/index.js",
+  "keywords": [
+    "prometheus",
+    "metrics",
+    "express",
+    "bundle"
+  ],
+  "scripts": {
+    "test": "node_modules/jasme/run.js"
+  },
+  "author": {
+    "name": "Konstantin Pogorelov",
+    "email": "or@pluseq.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "on-finished": "^2.3.0",
+    "prom-client": "^3.4.6"
+  },
+  "devDependencies": {
+    "coveralls": "^2.11.12",
+    "eslint": "^2.13.1",
+    "express": "^4.13.4",
+    "istanbul": "^0.4.4",
+    "jasme": "^5.2.0",
+    "koa": "^1.2.4",
+    "koa-connect": "^1.0.0",
+    "supertest": "^1.2.0",
+    "supertest-koa-agent": "^0.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jochen-schweizer/express-prom-bundle.git"
+  },
+  "gitHead": "3675c516a99787a37616b62f099be8bc0ed5ad22",
+  "bugs": {
+    "url": "https://github.com/jochen-schweizer/express-prom-bundle/issues"
+  },
+  "homepage": "https://github.com/jochen-schweizer/express-prom-bundle#readme",
+  "_id": "express-prom-bundle@1.1.8",
+  "_shasum": "518b6f2d633bc3ca1aa01bd9d55cc636e1d72180",
+  "_from": "express-prom-bundle@>=1.1.8 <2.0.0",
+  "_npmVersion": "3.10.3",
+  "_nodeVersion": "6.4.0",
+  "_npmUser": {
+    "name": "disjunction",
+    "email": "or@pluseq.com"
+  },
+  "dist": {
+    "shasum": "518b6f2d633bc3ca1aa01bd9d55cc636e1d72180",
+    "tarball": "https://registry.npmjs.org/express-prom-bundle/-/express-prom-bundle-1.1.8.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "disjunction",
+      "email": "or@pluseq.com"
+    }
+  ],
+  "_npmOperationalInternal": {
+    "host": "packages-12-west.internal.npmjs.com",
+    "tmp": "tmp/express-prom-bundle-1.1.8.tgz_1476450531769_0.31276437104679644"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/express-prom-bundle/-/express-prom-bundle-1.1.8.tgz"
+}

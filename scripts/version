@@ -1,0 +1,7 @@
+#!/bin/bash
+
+entries=`env | grep -i "version"`
+
+for entry in $entries ; do
+  echo $entry
+done
