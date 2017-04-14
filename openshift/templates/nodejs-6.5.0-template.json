@@ -1,0 +1,369 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "nodejs-6.5.0-template",
+        "annotations": {
+            "description": "Template to deploy Node.js v6.9.5 applications\nDocumentation available at http://devops:8090/marcelo/nodejs-6.5.0.git\n",
+            "iconClass": "icon-nodejs",
+            "tags": "nodejs,runtime"
+        }
+    },
+    "objects": [
+        {
+            "apiVersion": "v1",
+            "kind": "Service",
+            "metadata": {
+                "labels": {
+                    "app_name": "${APP_NAME}"
+                },
+                "name": "${APP_NAME}"
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "nodePort": 0,
+                        "port": 8080,
+                        "protocol": "TCP",
+                        "targetPort": 8080
+                    }
+                ],
+                "selector": {
+                    "app_name": "${APP_NAME}",
+                    "deploymentconfig": "${APP_NAME}"
+                },
+                "sessionAffinity": "None",
+                "type": "ClusterIP"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Route",
+            "metadata": {
+                "labels": {
+                    "app_name": "${APP_NAME}",
+                    "template": "nodejs-6.5.0-template"
+                },
+                "name": "${APP_NAME}"
+            },
+            "spec": {
+                "tls": {
+                    "termination": "edge"
+                },
+                "to": {
+                    "kind": "Service",
+                    "name": "${APP_NAME}"
+                },
+                "port": {
+                    "targetPort": "8080-tcp"
+                }
+            },
+            "status": {}
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APP_NAME}",
+                "annotations": {
+                    "description": "Keeps track of changes in the application image"
+                }
+            }
+        },
+        {
+          "kind": "BuildConfig",
+          "apiVersion": "v1",
+          "metadata": {
+            "name": "${APP_NAME}",
+            "annotations": {
+              "description": "Defines how to build the application"
+            }
+          },
+          "spec": {
+            "source": {
+              "type": "Git",
+              "git": {
+                "uri": "${SOURCE_REPOSITORY_URL}",
+                "ref": "${SOURCE_REPOSITORY_REF}"
+              },
+              "contextDir": "${CONTEXT_DIR}",
+              "sourceSecret": {
+                "name": "git-nodejs-6.5.0-secret"
+              }
+            },
+            "strategy": {
+              "type": "Docker",
+              "dockerStrategy": {
+                "from": {
+                  "kind": "DockerImage",
+                  "name": "marceloagmelo/nodejs-6.5.0:latest"
+                },
+                "env": [
+                  {
+                     "name": "ARTIFACT_URL",
+                     "value": "${ARTIFACT_URL}"
+                  }
+                ]
+              }
+            },
+            "output": {
+              "to": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:latest"
+              }
+            },
+            "triggers": [
+              {
+                "type": "ImageChange"
+              },
+              {
+                "type": "ConfigChange"
+              },
+              {
+                "type": "GitHub",
+                "github": {
+                  "secret": "${GITHUB_WEBHOOK_SECRET}"
+                }
+              }
+            ]
+          }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "DeploymentConfig",
+            "metadata": {
+                "labels": {
+                    "app_name": "${APP_NAME}"
+                },
+                "name": "${APP_NAME}"
+            },
+            "spec": {
+                "replicas": 1,
+                "selector": {
+                    "app_name": "${APP_NAME}",
+                    "deploymentconfig": "${APP_NAME}"
+                },
+                "strategy": {
+                    "resources": {},
+                    "rollingParams": {
+                        "intervalSeconds": 1,
+                        "timeoutSeconds": 600,
+                        "updatePeriodSeconds": 1
+                    },
+                    "type": "Rolling"
+                },
+                "triggers": [
+                  {
+                    "type": "ImageChange",
+                    "imageChangeParams": {
+                      "automatic": true,
+                      "containerNames": [
+                        "${APP_NAME}"
+                      ],
+                      "from": { 
+                        "kind": "ImageStream",
+                        "name": "${APP_NAME}:latest"
+                      }
+                    }
+                  },
+                  {
+                    "type": "ConfigChange"
+                  }
+                ],
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "app_name": "${APP_NAME}",
+                            "deploymentconfig": "${APP_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "env": [
+                                    {
+                                        "name": "APP_NAME",
+                                        "value": "${APP_NAME}"
+                                    },
+                                    {
+                                        "name": "PROJECT_NAME",
+                                        "valueFrom": {
+                                            "fieldRef": {
+                                                "fieldPath": "metadata.namespace"
+                                            }
+                                        }
+                                    },
+                                    {
+                                     "name": "NODE_PATH",
+                                     "value": "${NODE_PATH}"
+                                    },
+                                    {
+                                     "name": "NPM_REGISTRY",
+                                     "value": "${NPM_REGISTRY}"
+                                    },
+                                    {
+                                     "name": "NPM_LOGLEVEL",
+                                     "value": "${NPM_LOGLEVEL}"
+                                    },
+                                    {
+                                     "name": "DATABASE_URL",
+                                     "value": "${DATABASE_URL}"
+                                    },
+                                    {
+                                        "name": "TZ",
+                                        "value": "${TZ}"
+                                    }
+                                ],
+                                "image": "",
+                                "imagePullPolicy": "Always",
+                                "name": "${APP_NAME}",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {   
+                                        "containerPort": 1055,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {
+                                    "limits": {
+                                        "memory": "${POD_MAX_MEM}M"
+                                    },
+                                    "request": {
+                                        "memory": "${POD_MAX_MEM}M"
+                                    }
+                                },
+                                "securityContext": {
+                                    "capabilities": {},
+                                    "privileged": false
+                                },
+                                "terminationMessagePath": "/dev/termination-log",
+                                "volumeMounts": [
+                                    {
+                                        "mountPath": "/opt/metadata",
+                                        "name": "podinfo",
+                                        "readOnly": false
+                                    }
+                                ]
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Always",
+                        "volumes": [
+                            {
+                                "metadata": {
+                                    "items": [
+                                        {
+                                            "fieldRef": {
+                                                "fieldPath": "metadata.labels"
+                                            },
+                                            "name": "labels"
+                                        },
+                                        {
+                                            "fieldRef": {
+                                                "fieldPath": "metadata.annotations"
+                                            },
+                                            "name": "annotations"
+                                        }
+                                    ]
+                                },
+                                "name": "podinfo"
+                            }
+                        ]
+                    }
+                }
+            },
+            "status": {}
+        }
+    ],
+    "parameters": [
+        {
+            "name": "APP_NAME",
+            "displayName": "Application Name",
+            "description": "Application name",
+            "required": true
+        },
+        {
+          "name": "SOURCE_REPOSITORY_URL",
+          "displayName": "Git Repository URL",
+          "description": "The URL of the repository with your application source code.",
+          "value": "https://github.com/marceloagmelo/nodejs-6.5.0.git"
+        },
+        {
+          "name": "SOURCE_REPOSITORY_REF",
+          "displayName": "Git Reference",
+          "description": "Set this to a branch name, tag or other ref of your repository if you are not using the default branch."
+        },
+        {
+          "name": "CONTEXT_DIR",
+          "displayName": "Context Directory",
+          "description": "Set this to the relative path to your project if it is not in the root of your repository.",
+          "value": ""
+        },
+        {
+          "name": "GITHUB_WEBHOOK_SECRET",
+          "displayName": "GitHub Webhook Secret",
+          "description": "A secret string used to configure the GitHub webhook.",
+          "generate": "expression",
+          "from": "[a-zA-Z0-9]{40}"
+        },
+        {
+            "name": "ARTIFACT_URL",
+            "displayName": "Artifact url",
+            "description": "Artifact url (jar, zip, tar.gz)"
+        },
+        {
+            "name": "NODE_PATH",
+            "displayName": "Path to the app root's folder",
+            "description": "Path to the app root's folder"
+        },
+        {
+            "name": "NPM_REGISTRY",
+            "displayName": "Npm registry",
+            "description": "The JavaScripts Package Registry.",
+            "value": "https://nexus.ci.gsnet.corp/nexus/content/groups/npm-all/"
+        },
+        {
+            "name": "NPM_LOGLEVEL",
+            "displayName": "npm - What level of logs to report",
+            "description": "silent, error, warn, http, info, verbose, silly",
+            "value": "info"
+        },
+        {
+            "name": "POD_MAX_MEM",
+            "displayName": "Pods Max Memory",
+            "description": "Maximum memory for the pods (in Megabytes)",
+            "value": "512"
+        },
+        {
+            "name": "http_proxy",
+            "displayName": "http_proxy",
+            "description": "Http Proxy environment variable. http://user:pass@ip:port",
+            "value": "http://proxy.lvtc.gsnet.corp:80"
+        },
+        {
+            "name": "https_proxy",
+            "displayName": "https_proxy",
+            "description": "Https Proxy environment variable. http://user:pass@ip:port",
+            "value": "http://proxy.lvtc.gsnet.corp:80"
+        },
+        {
+            "name": "DATABASE_URL",
+            "displayName": "DATABASE_URL",
+            "description": "DATABASE_URL",
+            "value": "mongodb://fec_user:fec#admin@mongodb:27017/fec_db"
+        },
+        {
+            "name": "TZ",
+            "displayName": "TimeZone",
+            "description": "TimeZone for the running containers.",
+            "value": "America/Sao_Paulo"
+        }
+    ]
+}
